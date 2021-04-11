@@ -1,16 +1,15 @@
--- Copyright 2019-2020 Mitchell.
+-- Copyright 2019-2021 Mitchell.
 
 --[[ This comment is for LuaDoc
 ---
--- A Textadept module that extends the editor's [`ui.command_entry`]() with a
--- mode that can open files relative to the current file or directory.
+-- A Textadept module that extends the editor's [`ui.command_entry`]() with a mode that can
+-- open files relative to the current file or directory.
 -- Tab-completion is available.
 --
 -- This is an alternative to Textadept's default File Open dialog.
 --
--- Install this module by copying it into your *~/.textadept/modules/* directory
--- or Textadept's *modules/* directory, and then putting the following in your
--- *~/.textadept/init.lua*:
+-- Install this module by copying it into your *~/.textadept/modules/* directory or Textadept's
+-- *modules/* directory, and then putting the following in your *~/.textadept/init.lua*:
 --
 --     require('open_file_mode')
 module('ui.command_entry.open_file')]]
@@ -18,25 +17,21 @@ module('ui.command_entry.open_file')]]
 -- Normalizes a Windows path by replacing '/' with '\\'.
 -- Also transforms Cygwin-style '/c/' root directories into 'C:\'.
 local function win32_normalize(path)
-  return path:gsub('^/([%a])/', function(ch)
-    return string.format('%s:\\', string.upper(ch))
-  end):gsub('/', '\\')
+  return path:gsub('^/([%a])/', function(ch) return string.format('%s:\\', string.upper(ch)) end)
+    :gsub('/', '\\')
 end
 
 ---
--- Opens the command entry in a mode that can open files relative to the current
--- file or directory.
--- Tab-completion is available, and on Win32, Cygwin-style '/c/' root
--- directories are supported.
--- If no file is ultimately specified, the user is prompted with Textadept's
--- default File Open dialog.
+-- Opens the command entry in a mode that can open files relative to the current file or directory.
+-- Tab-completion is available, and on Win32, Cygwin-style '/c/' root directories are supported.
+-- If no file is ultimately specified, the user is prompted with Textadept's default File
+-- Open dialog.
 -- @name _G.ui.command_entry.open_file
 function ui.command_entry.open_file()
   ui.command_entry.run(function(file)
     if file ~= '' and not file:find('^%a?:?[/\\]') then
       -- Convert relative path into an absolute one.
-      file = (buffer.filename or lfs.currentdir() .. '/'):match('^.+[/\\]') ..
-        file
+      file = (buffer.filename or lfs.currentdir() .. '/'):match('^.+[/\\]') .. file
     end
     if WIN32 then file = win32_normalize(file) end
     io.open_file(file ~= '' and file or nil)
@@ -48,8 +43,7 @@ function ui.command_entry.open_file()
       local path = ui.command_entry:get_text()
       if not path:find('^%a?:?[/\\]') then
         -- Convert relative path into an absolute one.
-        path = (buffer.filename or lfs.currentdir() .. '/'):match('^.+[/\\]') ..
-          path
+        path = (buffer.filename or lfs.currentdir() .. '/'):match('^.+[/\\]') .. path
       end
       if WIN32 then path = win32_normalize(path) end
       local dir, part = path:match('^(.-)\\?([^/\\]*)$')
