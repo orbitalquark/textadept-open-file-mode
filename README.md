@@ -9,7 +9,10 @@ This is an alternative to Textadept's default File Open dialog.
 Install this module by copying it into your *~/.textadept/modules/* directory or Textadept's
 *modules/* directory, and then putting the following in your *~/.textadept/init.lua*:
 
-    require('open_file_mode')
+    keys['alt+o'] = require('open_file_mode')
+
+Replace "alt+o" with the key you want to bind the function to. You can also create a menu
+item with that function.
 
 ## Functions defined by `ui.command_entry.open_file`
 
