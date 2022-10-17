@@ -17,6 +17,8 @@
 -- item with that function.
 module('ui.command_entry.open_file')]]
 
+if not rawget(_L, 'Open file:') then _L['Open file:'] = 'Open file:' end
+
 -- Normalizes a Windows path by replacing '/' with '\\'.
 -- Also transforms Cygwin-style '/c/' root directories into 'C:\'.
 local function win32_normalize(path)
@@ -31,7 +33,7 @@ end
 -- Open dialog.
 -- @name _G.ui.command_entry.open_file
 function ui.command_entry.open_file()
-  ui.command_entry.run(function(file)
+  ui.command_entry.run(_L['Open file:'], function(file)
     if file ~= '' and not file:find('^%a?:?[/\\]') then
       -- Convert relative path into an absolute one.
       file = (buffer.filename or lfs.currentdir() .. '/'):match('^.+[/\\]') .. file
