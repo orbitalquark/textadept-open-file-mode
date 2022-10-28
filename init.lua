@@ -32,7 +32,7 @@ end
 -- If no file is ultimately specified, the user is prompted with Textadept's default File
 -- Open dialog.
 -- @name _G.ui.command_entry.open_file
-function ui.command_entry.open_file()
+local function open_file()
   ui.command_entry.run(_L['Open file:'], function(file)
     if file ~= '' and not file:find('^%a?:?[/\\]') then
       -- Convert relative path into an absolute one.
@@ -70,5 +70,6 @@ function ui.command_entry.open_file()
     end
   })
 end
+rawset(ui.command_entry, 'open_file', open_file)
 
-return ui.command_entry.open_file
+return open_file
