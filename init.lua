@@ -1,4 +1,4 @@
--- Copyright 2019-2022 Mitchell.
+-- Copyright 2019-2023 Mitchell.
 
 --[[ This comment is for LuaDoc
 ---
