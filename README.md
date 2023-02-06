@@ -1,4 +1,5 @@
 # Open File Mode
+---
 
 A Textadept module that extends the editor's [`ui.command_entry`](#ui.command_entry) with a mode that can
 open files relative to the current file or directory.

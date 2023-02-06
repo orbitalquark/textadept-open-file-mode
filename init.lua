@@ -1,6 +1,5 @@
 -- Copyright 2019-2023 Mitchell.
 
---[[ This comment is for LuaDoc
 ---
 -- A Textadept module that extends the editor's [`ui.command_entry`]() with a mode that can
 -- open files relative to the current file or directory.
@@ -15,7 +14,7 @@
 --
 -- Replace "alt+o" with the key you want to bind the function to. You can also create a menu
 -- item with that function.
-module('ui.command_entry.open_file')]]
+-- @module ui.command_entry.open_file
 
 if not rawget(_L, 'Open file:') then _L['Open file:'] = 'Open file:' end
 
@@ -31,7 +30,7 @@ end
 -- Tab-completion is available, and on Windows, Cygwin-style '/c/' root directories are supported.
 -- If no file is ultimately specified, the user is prompted with Textadept's default File
 -- Open dialog.
--- @name _G.ui.command_entry.open_file
+-- @function _G.ui.command_entry.open_file
 local function open_file()
   ui.command_entry.run(_L['Open file:'], function(file)
     if file ~= '' and not file:find('^%a?:?[/\\]') then
