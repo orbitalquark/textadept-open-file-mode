@@ -1,7 +1,6 @@
 -- Copyright 2019-2023 Mitchell.
 
----
--- A Textadept module that extends the editor's [`ui.command_entry`]() with a mode that can
+--- A Textadept module that extends the editor's [`ui.command_entry`]() with a mode that can
 -- open files relative to the current file or directory.
 -- Tab-completion is available.
 --
@@ -18,15 +17,15 @@
 
 if not rawget(_L, 'Open file:') then _L['Open file:'] = 'Open file:' end
 
--- Normalizes a Windows path by replacing '/' with '\\'.
+--- Normalizes a Windows path by replacing '/' with '\\'.
 -- Also transforms Cygwin-style '/c/' root directories into 'C:\'.
 local function win32_normalize(path)
   return path:gsub('^/([%a])/', function(ch) return string.format('%s:\\', string.upper(ch)) end)
     :gsub('/', '\\')
 end
 
----
--- Opens the command entry in a mode that can open files relative to the current file or directory.
+--- Opens the command entry in a mode that can open files relative to the current file or
+-- directory.
 -- Tab-completion is available, and on Windows, Cygwin-style '/c/' root directories are supported.
 -- If no file is ultimately specified, the user is prompted with Textadept's default File
 -- Open dialog.
