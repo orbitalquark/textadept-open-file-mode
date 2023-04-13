@@ -1,7 +1,7 @@
 -- Copyright 2019-2023 Mitchell.
 
---- A Textadept module that extends the editor's [`ui.command_entry`]() with a mode that can
--- open files relative to the current file or directory.
+--- A Textadept module that extends the editor's `ui.command_entry` with a mode that can open
+-- files relative to the current file or directory.
 -- Tab-completion is available.
 --
 -- This is an alternative to Textadept's default File Open dialog.
