@@ -1,4 +1,4 @@
--- Copyright 2019-2023 Mitchell.
+-- Copyright 2019-2024 Mitchell.
 
 --- A Textadept module that extends the editor's `ui.command_entry` with a mode that can open
 -- files relative to the current file or directory.
