@@ -40,6 +40,7 @@ local files = {}
 -- @function _G.ui.command_entry.open_file
 local function open_file()
 	ui.command_entry.run(_L['Open file:'], function(file)
+		file = file:gsub('^~', os.getenv('HOME'))
 		if file ~= '' and not file:find('^%a?:?[/\\]') then
 			-- Convert relative path into an absolute one.
 			file = (buffer.filename or lfs.currentdir() .. '/'):match('^.+[/\\]') .. file
@@ -61,7 +62,7 @@ local function open_file()
 			end
 			-- Autocomplete the filename in the command entry
 			files = {} -- clear
-			local path = ui.command_entry:get_text()
+			local path = ui.command_entry:get_text():gsub('^~', os.getenv('HOME'))
 			if not path:find('^%a?:?[/\\]') then
 				-- Convert relative path into an absolute one.
 				path = (buffer.filename or lfs.currentdir() .. '/'):match('^.+[/\\]') .. path
