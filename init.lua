@@ -29,6 +29,9 @@ local function win32_normalize(path)
 		:gsub('/', '\\')
 end
 
+--- The current list of files in the autocompletion list.
+local files = {}
+
 --- Opens the command entry in a mode that can open files relative to the current file or
 -- directory.
 -- Tab-completion is available, and on Windows, Cygwin-style '/c/' root directories are supported.
@@ -45,9 +48,19 @@ local function open_file()
 		io.open_file(file ~= '' and file or nil)
 	end, {
 		['\t'] = function()
-			if ui.command_entry:auto_c_active() then return end
+			-- Try to autocomplete a uniquely-prefixed item (like in bash).
+			if ui.command_entry:auto_c_active() then
+				local prefix = ui.command_entry:text_range(ui.command_entry:auto_c_pos_start(),
+					ui.command_entry.current_pos)
+				local count = 0
+				for _, file in ipairs(files) do
+					if file:find(prefix, 1, true) == 1 then count = count + 1 end
+				end
+				if count == 1 then ui.command_entry:auto_c_complete() end
+				return
+			end
 			-- Autocomplete the filename in the command entry
-			local files = {}
+			files = {} -- clear
 			local path = ui.command_entry:get_text()
 			if not path:find('^%a?:?[/\\]') then
 				-- Convert relative path into an absolute one.
