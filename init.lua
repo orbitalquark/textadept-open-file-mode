@@ -17,6 +17,11 @@
 -- item with that function.
 -- @module ui.command_entry.open_file
 
+-- LuaFormatter off
+local xpm16 = {folder=not CURSES and [[/* XPM */ static char *folder[] = { /* columns rows colors chars-per-pixel */ "16 16 7 1 ", "  c None", ". c #A89453", "X c #AD9856", "o c #BCA55D", "O c #D5BA69", "+ c #EDD075", "@ c #FBDC7C", /* pixels */ "                ", "                ", "......          ", ".@@@@+X         ", ".OOOOOo........ ", ".@@@@@@@@@@@@@. ", ".@@@@@@@@@@@@@. ", ".@@@@@@@@@@@@@. ", ".@@@@@@@@@@@@@. ", ".@@@@@@@@@@@@@. ", ".@@@@@@@@@@@@@. ", ".@@@@@@@@@@@@@. ", ".@@@@@@@@@@@@@. ", "............... ", "                ", "                " };]] or ' ', file=not CURSES and [[/* XPM */ static char *file[] = { /* columns rows colors chars-per-pixel */ "16 16 9 1 ", "  c None", ". c #6D6D6D", "X c #717171", "o c #727272", "O c gray45", "+ c #8D8D8D", "@ c #A9A9A9", "# c #AAAAAA", "$ c #ECECEC", /* pixels */ " .........X     ", " .$$$$$$$+#X    ", " .$$$$$$$+$#X   ", " .$$$$$$$+$$#X  ", " .$$$$$$$++++.  ", " .$$$$$$$$$$$.  ", " .$$$$$$$$$$$.  ", " .$$$$$$$$$$$.  ", " .$$$$$$$$$$$.  ", " .$$$$$$$$$$$.  ", " .$$$$$$$$$$$.  ", " .$$$$$$$$$$$.  ", " .$$$$$$$$$$$.  ", " .$$$$$$$$$$$.  ", " .............  ", "                " };]] or ' '}
+local xpm32 = {folder=not CURSES and [[/* XPM */ static char *folder[] = { /* columns rows colors chars-per-pixel */ "32 32 10 1 ", "  c None", ". c #A89453", "X c #AA9655", "o c #AC9755", "O c #B29B57", "+ c #B6A05A", "@ c #C8AF63", "# c #EDD075", "$ c #F7D97A", "% c #FBDC7C", /* pixels */ "                                ", "                                ", "                                ", "                                ", "............                    ", ".............                   ", "..%%%%%%%%%@..                  ", "..%%%%%%%%%$+.O                 ", "..%%%%%%%%%%#.................  ", "..............................  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..............................  ", "..............................  ", "                                ", "                                ", "                                ", "                                " };]] or ' ', file=not CURSES and [[/* XPM */ static char *file[] = { /* columns rows colors chars-per-pixel */ "32 32 6 1 ", "  c None", ". c #6D6D6D", "X c #8D8D8D", "o c #A9A9A9", "O c gray67", "+ c #ECECEC", /* pixels */ "  ...................           ", "  ....................          ", "  ..++++++++++++++XXO..         ", "  ..++++++++++++++XX+O..        ", "  ..++++++++++++++XX++O..       ", "  ..++++++++++++++XX+++O..      ", "  ..++++++++++++++XX++++O..     ", "  ..++++++++++++++XX+++++O..    ", "  ..++++++++++++++XXXXXXXX..    ", "  ..++++++++++++++XXXXXXXX..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..........................    ", "  ..........................    ", "                                ", "                                " };]] or ' '}
+-- LuaFormatter on
+
 --- Normalizes a Windows path by replacing '/' with '\\'.
 -- Also transforms Cygwin-style '/c/' root directories into 'C:\'.
 local function win32_normalize(path)
@@ -56,7 +61,12 @@ local function open_file()
 				local patt = '^' .. part:gsub('(%p)', '%%%1')
 				for filename in lfs.walk(dir, nil, 0, true) do
 					filename = filename:match('[^/\\]+[/\\]?$')
-					if filename:find(patt) then files[#files + 1] = filename end
+					local is_dir = filename:find('[/\\]$')
+					if filename:find(patt) then
+						files[#files + 1] = string.format('%s%s%d', filename,
+							string.char(buffer.auto_c_type_separator),
+							ui.command_entry._xpm[is_dir and 'folder' or 'file'])
+					end
 				end
 				table.sort(files)
 				ui.command_entry.auto_c_separator = string.byte(';')
@@ -67,5 +77,17 @@ local function open_file()
 	})
 end
 rawset(ui.command_entry, 'open_file', open_file)
+
+-- Add autocompletion list images for files and folders.
+-- Make use of the undocumented `ui.command_entry._xpm` table.
+events.connect(events.INITIALIZED, function()
+	if is_hidpi() then ui.command_entry.auto_c_image_scale = 200 end
+	local image_type = 1 -- no need to use M.new_image_type() since this is a special view
+	for _ in pairs(ui.command_entry._xpm) do image_type = image_type + 1 end
+	for name, xpm in pairs(not is_hidpi() and xpm16 or xpm32) do
+		ui.command_entry:register_image(image_type, xpm)
+		ui.command_entry._xpm[name], image_type = image_type, image_type + 1
+	end
+end)
 
 return open_file
