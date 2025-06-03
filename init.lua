@@ -22,15 +22,66 @@ local xpm16 = {folder=not CURSES and [[/* XPM */ static char *folder[] = { /* co
 local xpm32 = {folder=not CURSES and [[/* XPM */ static char *folder[] = { /* columns rows colors chars-per-pixel */ "32 32 10 1 ", "  c None", ". c #A89453", "X c #AA9655", "o c #AC9755", "O c #B29B57", "+ c #B6A05A", "@ c #C8AF63", "# c #EDD075", "$ c #F7D97A", "% c #FBDC7C", /* pixels */ "                                ", "                                ", "                                ", "                                ", "............                    ", ".............                   ", "..%%%%%%%%%@..                  ", "..%%%%%%%%%$+.O                 ", "..%%%%%%%%%%#.................  ", "..............................  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..%%%%%%%%%%%%%%%%%%%%%%%%%%..  ", "..............................  ", "..............................  ", "                                ", "                                ", "                                ", "                                " };]] or ' ', file=not CURSES and [[/* XPM */ static char *file[] = { /* columns rows colors chars-per-pixel */ "32 32 6 1 ", "  c None", ". c #6D6D6D", "X c #8D8D8D", "o c #A9A9A9", "O c gray67", "+ c #ECECEC", /* pixels */ "  ...................           ", "  ....................          ", "  ..++++++++++++++XXO..         ", "  ..++++++++++++++XX+O..        ", "  ..++++++++++++++XX++O..       ", "  ..++++++++++++++XX+++O..      ", "  ..++++++++++++++XX++++O..     ", "  ..++++++++++++++XX+++++O..    ", "  ..++++++++++++++XXXXXXXX..    ", "  ..++++++++++++++XXXXXXXX..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..++++++++++++++++++++++..    ", "  ..........................    ", "  ..........................    ", "                                ", "                                " };]] or ' '}
 -- LuaFormatter on
 
---- Normalizes a Windows path by replacing '/' with '\\'.
--- Also transforms Cygwin-style '/c/' root directories into 'C:\'.
-local function win32_normalize(path)
-	return path:gsub('^/([%a])/', function(ch) return string.format('%s:\\', string.upper(ch)) end)
-		:gsub('/', '\\')
+--- Returns a normalized version of the given path that `lfs` can work with.
+-- @param path String path to normalize.
+local function normalize_path(path)
+	path = path:gsub('^~', os.getenv('HOME'))
+
+	-- Convert relative path into an absolute one.
+	if not path:find('^%a?:?[/\\]') then
+		path = (buffer.filename or lfs.currentdir() .. '/'):match('^.+[/\\]') .. path
+	end
+
+	-- Normalizes Windows paths by replacing '/' with '\\'.
+	-- Also transform Cygwin-style '/c/' root directories into 'C:\'.
+	if WIN32 then
+		path = path:gsub('^/([%a])/', function(ch) return string.format('%s:\\', string.upper(ch)) end)
+			:gsub('/', '\\')
+	end
+
+	return path
 end
 
 --- The current list of files in the autocompletion list.
 local files = {}
+
+--- Show an autocompletion list for the current filename in the command entry.
+-- If a list is already active, try to autocomplete the current item if it has a unique prefix.
+local function complete()
+	-- Try to autocomplete a uniquely-prefixed item (like in bash).
+	if ui.command_entry:auto_c_active() then
+		local prefix = ui.command_entry:text_range(ui.command_entry:auto_c_pos_start(),
+			ui.command_entry.current_pos)
+		local count = 0
+		for _, file in ipairs(files) do if file:find(prefix, 1, true) == 1 then count = count + 1 end end
+		if count == 1 then ui.command_entry:auto_c_complete() end
+		return
+	end
+
+	-- Show an autocomplete list.
+	files = {} -- clear
+
+	-- Determine the current directory and file prefix (if any).
+	local dir, part = normalize_path(ui.command_entry:get_text()):match('^(.-)\\?([^/\\]*)$')
+	if WIN32 and dir:find('^%a:$') then dir = dir .. '\\' end -- C: --> C:\
+	if not lfs.attributes(dir, 'mode') == 'directory' then return end
+
+	-- Iterate over directory, finding file matches.
+	for filename in lfs.walk(dir, nil, 0, true) do
+		filename = filename:match('[^/\\]+[/\\]?$')
+		local xpm = ui.command_entry._xpm[filename:find('[/\\]$') and 'folder' or 'file']
+		if filename:find(part, 1, true) == 1 then
+			files[#files + 1] = string.format('%s%s%d', filename,
+				string.char(buffer.auto_c_type_separator), xpm)
+		end
+	end
+
+	-- Show the autocompletion list.
+	table.sort(files)
+	ui.command_entry.auto_c_separator = string.byte(';')
+	ui.command_entry.auto_c_order = buffer.ORDER_PRESORTED
+	ui.command_entry:auto_c_show(#part, table.concat(files, ';'))
+end
 
 --- Opens the command entry in a mode that can open files relative to the current file or
 -- directory.
@@ -40,55 +91,9 @@ local files = {}
 -- @function _G.ui.command_entry.open_file
 local function open_file()
 	ui.command_entry.run(_L['Open file:'], function(file)
-		file = file:gsub('^~', os.getenv('HOME'))
-		if file ~= '' and not file:find('^%a?:?[/\\]') then
-			-- Convert relative path into an absolute one.
-			file = (buffer.filename or lfs.currentdir() .. '/'):match('^.+[/\\]') .. file
-		end
-		if WIN32 then file = win32_normalize(file) end
+		if file ~= '' then file = normalize_path(file) end
 		io.open_file(file ~= '' and file or nil)
-	end, {
-		['\t'] = function()
-			-- Try to autocomplete a uniquely-prefixed item (like in bash).
-			if ui.command_entry:auto_c_active() then
-				local prefix = ui.command_entry:text_range(ui.command_entry:auto_c_pos_start(),
-					ui.command_entry.current_pos)
-				local count = 0
-				for _, file in ipairs(files) do
-					if file:find(prefix, 1, true) == 1 then count = count + 1 end
-				end
-				if count == 1 then ui.command_entry:auto_c_complete() end
-				return
-			end
-			-- Autocomplete the filename in the command entry
-			files = {} -- clear
-			local path = ui.command_entry:get_text():gsub('^~', os.getenv('HOME'))
-			if not path:find('^%a?:?[/\\]') then
-				-- Convert relative path into an absolute one.
-				path = (buffer.filename or lfs.currentdir() .. '/'):match('^.+[/\\]') .. path
-			end
-			if WIN32 then path = win32_normalize(path) end
-			local dir, part = path:match('^(.-)\\?([^/\\]*)$')
-			if WIN32 and dir:find('^%a:$') then dir = dir .. '\\' end -- C: --> C:\
-			if lfs.attributes(dir, 'mode') == 'directory' then
-				-- Iterate over directory, finding file matches.
-				local patt = '^' .. part:gsub('(%p)', '%%%1')
-				for filename in lfs.walk(dir, nil, 0, true) do
-					filename = filename:match('[^/\\]+[/\\]?$')
-					local is_dir = filename:find('[/\\]$')
-					if filename:find(patt) then
-						files[#files + 1] = string.format('%s%s%d', filename,
-							string.char(buffer.auto_c_type_separator),
-							ui.command_entry._xpm[is_dir and 'folder' or 'file'])
-					end
-				end
-				table.sort(files)
-				ui.command_entry.auto_c_separator = string.byte(';')
-				ui.command_entry.auto_c_order = buffer.ORDER_PRESORTED
-				ui.command_entry:auto_c_show(#part, table.concat(files, ';'))
-			end
-		end
-	})
+	end, {['\t'] = complete})
 end
 rawset(ui.command_entry, 'open_file', open_file)
 
