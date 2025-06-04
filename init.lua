@@ -25,7 +25,7 @@ local xpm32 = {folder=not CURSES and [[/* XPM */ static char *folder[] = { /* co
 --- Returns a normalized version of the given path that `lfs` can work with.
 -- @param path String path to normalize.
 local function normalize_path(path)
-	path = path:gsub('^~', os.getenv('HOME'))
+	if not WIN32 then path = path:gsub('^~', os.getenv('HOME')) end
 
 	-- Convert relative path into an absolute one.
 	if not path:find('^%a?:?[/\\]') then
@@ -64,7 +64,7 @@ local function complete()
 	-- Determine the current directory and file prefix (if any).
 	local dir, part = normalize_path(ui.command_entry:get_text()):match('^(.-)\\?([^/\\]*)$')
 	if WIN32 and dir:find('^%a:$') then dir = dir .. '\\' end -- C: --> C:\
-	if not lfs.attributes(dir, 'mode') == 'directory' then return end
+	if lfs.attributes(dir, 'mode') ~= 'directory' then return end
 
 	-- Iterate over directory, finding file matches.
 	for filename in lfs.walk(dir, nil, 0, true) do

@@ -35,7 +35,7 @@ end)
 test('open_file_mode should select unique items after typing and pressing Tab again', function()
 	local file = 'file.txt'
 	local file2 = 'file2.txt'
-	local dir<close> = test.tmpdir({file, file2}, true)
+	local _<close> = test.tmpdir({file, file2}, true)
 
 	local auto_c_show = test.stub()
 	local _<close> = test.mock(ui.command_entry, 'auto_c_show', auto_c_show)
