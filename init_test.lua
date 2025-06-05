@@ -66,6 +66,7 @@ test('open_file_mode should expand ~', function()
 	local path = os.getenv('HOME') .. '/' .. items:match('^[^;]+'):gsub('%p%d$', '') -- strip xpm
 	test.assert(lfs.attributes(path), "'%s' does not exist", path)
 end)
+if WIN32 then skip('~ is meaningless on Windows') end
 
 test('open_file_mode should support Cygwin-style paths on Windows', function()
 	local file = 'file.txt'
