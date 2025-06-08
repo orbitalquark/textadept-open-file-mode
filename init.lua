@@ -72,7 +72,7 @@ local function complete()
 		local xpm = ui.command_entry._xpm[filename:find('[/\\]$') and 'folder' or 'file']
 		if filename:find(part, 1, true) == 1 then
 			files[#files + 1] = string.format('%s%s%d', filename,
-				string.char(buffer.auto_c_type_separator), xpm)
+				string.char(ui.command_entry.auto_c_type_separator), xpm)
 		end
 	end
 
