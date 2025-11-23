@@ -67,8 +67,8 @@ local function complete()
 	if lfs.attributes(dir, 'mode') ~= 'directory' then return end
 
 	-- Iterate over directory, finding file matches.
-	for filename in lfs.walk(dir, nil, 0, true) do
-		filename = filename:match('[^/\\]+[/\\]?$')
+	for path in lfs.walk(dir, nil, 0, true) do
+		local filename = path:match('[^/\\]+[/\\]?$')
 		local xpm = ui.command_entry._xpm[filename:find('[/\\]$') and 'folder' or 'file']
 		if filename:find(part, 1, true) == 1 then
 			files[#files + 1] = string.format('%s%s%d', filename,
