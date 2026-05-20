@@ -26,7 +26,7 @@ test('open_file_mode should open the command entry, tab-complete, and open filen
 		first_completions[#first_completions + 1] = item:gsub('%p%d$', '') -- strip xpm
 	end
 	table.sort(first_completions)
-	test.assert_equal(first_completions, {'file.txt', 'subdir' .. (not WIN32 and '/' or '\\')})
+	test.assert_equal(first_completions, {'file.txt', 'subdir' .. (OS ~= 'windows' and '/' or '\\')})
 	local second_completions = auto_c_show.args[3]:gsub('%p%d$', '') -- strip xpm
 	test.assert_equal(second_completions, subfile)
 	test.assert_equal(buffer.filename, dir / (subdir .. '/' .. subfile))
@@ -66,11 +66,11 @@ test('open_file_mode should expand ~', function()
 	local path = os.getenv('HOME') .. '/' .. items:match('^[^;]+'):gsub('%p%d$', '') -- strip xpm
 	test.assert(lfs.attributes(path), "'%s' does not exist", path)
 end)
-if WIN32 then skip('~ is meaningless on Windows') end
+if OS == 'windows' then skip('~ is meaningless on Windows') end
 
 test('open_file_mode should support Cygwin-style paths on Windows', function()
 	local file = 'file.txt'
-	local _<close> = test.mock(_G, 'WIN32', true)
+	local _<close> = test.mock(_G, 'OS', 'windows')
 	local open_file = test.stub()
 	local _<close> = test.mock(io, 'open_file', open_file)
 
