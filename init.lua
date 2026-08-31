@@ -100,10 +100,10 @@ rawset(ui.command_entry, 'open_file', open_file)
 -- Add autocompletion list images for files and folders.
 -- Make use of the undocumented `ui.command_entry._xpm` table.
 events.connect(events.INITIALIZED, function()
-	if is_hidpi() then ui.command_entry.auto_c_image_scale = 200 end
+	ui.command_entry.auto_c_image_scale = math.floor(100 * ui.scale)
 	local image_type = 1 -- no need to use M.new_image_type() since this is a special view
 	for _ in pairs(ui.command_entry._xpm) do image_type = image_type + 1 end
-	for name, xpm in pairs(not is_hidpi() and xpm16 or xpm32) do
+	for name, xpm in pairs(ui.scale == 1 and xpm16 or xpm32) do
 		ui.command_entry:register_image(image_type, xpm)
 		ui.command_entry._xpm[name], image_type = image_type, image_type + 1
 	end
